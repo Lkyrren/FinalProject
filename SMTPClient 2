@@ -1,0 +1,226 @@
+import java.io.*;
+import java.net.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.util.*;
+
+public class SMTPCLient2 extends JFrame implements ActionListener 
+{
+   private JButton jbConnect = new JButton("Connect");
+   private JTextField jtfServerIP = new JTextField(20);
+   private JTextArea jta = new JTextArea(100,200);
+   
+   //login gui
+   private JFrame jf1;
+   private JPanel jpN;
+   private JTextField jtfUsername = new JTextField(20);
+   private JTextField jtfPassword = new JTextField(20);
+   private JButton jbLogin = new JButton("Login");
+   private JLabel jlUser = new JLabel("Username");
+   private JLabel jlPassword = new JLabel("Password");
+   
+   //Message gui
+   private JFrame jf2;
+   private JTextField jtfFrom = new JTextField(25);
+   private JTextField jtfTo = new JTextField(25);
+   private JTextArea jtaMessage = new JTextArea();
+
+   private PrintWriter pwt = null;
+   private Scanner scn = null;
+   private ObjectOutputStream oos = null;
+   private ObjectInputStream ois = null;
+
+   public static final int SERVER_PORT =42069;
+   private Socket socket = null;
+
+   /**
+    * main program 
+    */
+   public static void main(String[] args) 
+   {
+      new SMTPCLient2();
+   }
+
+   /**
+    * Constructor ... draw and set up GUI
+    */
+   public SMTPCLient2() 
+   {
+      this.setTitle("SMTP Client");
+      this.setSize(475, 300);
+      this.setLocation(100, 50);
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      this.setResizable(false);
+      
+      JPanel jpN = new JPanel();
+         jpN.add(jtfServerIP);
+         jpN.add(jbConnect);
+         jbConnect.addActionListener(this);
+      this.add(jpN, BorderLayout.NORTH);
+      
+      JPanel jpC = new JPanel();
+         jpC.add(jta);
+      this.add(jpC, BorderLayout.CENTER);
+      
+      jbLogin.addActionListener(this);
+      this.setVisible(true);
+   }
+
+   /** 
+    * Button dispatcher
+    */
+    public void actionPerformed(ActionEvent ae) 
+    {
+      switch(ae.getActionCommand()) 
+      {
+         case "Connect":
+            doConnect();
+            break;
+         case "Disconnect":
+            doDisconnect();
+            break;
+         case "Login":
+            doSend();
+            break;
+      }
+   }
+
+   /**
+    * doConnect - Connect button
+    */
+   private void doConnect() 
+   {
+      try{
+         // Connect to server and set up two streams, a Scanner for input from the
+         // server and a PrintWriter for output to the server
+         socket = new Socket(jtfServerIP.getText(), SERVER_PORT);
+         scn = new Scanner(new InputStreamReader(socket.getInputStream()));
+         pwt = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+         oos = new ObjectOutputStream(socket.getOutputStream());
+         ois = new ObjectInputStream(socket.getInputStream());
+      }
+      catch(IOException ioe){
+         jta.append("IO Exception: " + ioe + "\n");
+         return;
+      }
+      jta.append("Connected!\n");
+      jbConnect.setText("Disconnect");
+      
+      login();
+   }
+
+   /**
+    * doDisconnect - Disconnect button'
+    */
+   private void doDisconnect() {
+      try {
+         // Close the socket and streams
+         socket.close();
+         scn.close();
+         pwt.close();
+         oos.close();
+         ois.close();
+      }
+      catch(IOException ioe) {
+         jta.append("IO Exception: " + ioe + "\n");
+         return;
+      }
+      jbConnect.setText("Connect");
+   }
+   
+   public void login(){
+      System.out.println("Login gui");
+      jf1 = new JFrame();
+      
+      jpN = new JPanel(new GridLayout(0,1));
+         jpN.add(jlUser);
+         jpN.add(jtfUsername);
+         jpN.add(jlPassword);
+         jpN.add(jtfPassword);
+      jf1.add(jpN, BorderLayout.NORTH);
+      
+      JPanel jpS = new JPanel();
+         jpS.add(jbLogin);
+      jf1.add(jpS, BorderLayout.SOUTH);
+      
+      jf1.setTitle("SMTP Client Login");
+      jf1.setSize(450,300);
+      jf1.setLocation(600,50);
+      jf1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         
+      jf1.setVisible(true);
+   }
+
+   /**
+    * doSend - Send button'
+    */
+   private void doSend() 
+   {
+      // Get the sentence, send to server, wait for reply
+      //pwt.println("LOGIN");
+      // pwt.println(jtfUsername.getText()+": "+jtfPassword.getText());
+//       pwt.flush();
+//       String reply = scn.nextLine();
+//       jta.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+//          jta.append("Reply: " + reply + "\n");
+//       System.out.println("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+//       System.out.println("Reply: " + reply + "\n");
+      try{
+         oos.writeObject(jtfUsername.getText()+": "+jtfPassword.getText());
+         jta.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+         Object obj = ois.readObject();
+         if(obj instanceof MailConstants){
+            MailConstants msg = (MailConstants) obj;
+            composeMessage();
+         }
+         else{
+            String reply = (String)obj;
+            jta.append("Reply: " + reply + "\n");
+            composeMessage();
+         }
+      }
+      catch(Exception e){}
+      //composeMessage();
+      // if(reply.equals("LOGIN")){
+//          pwt.println(jtfUsername.getText()+": "+jtfPassword.getText());
+//          pwt.flush();
+//          jtaLog.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+//          jtaLog.append("Reply: " + reply + "\n");
+//       }
+//       else{
+//          jtaLog.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+//          jtaLog.append("Reply: " + reply + "\n");
+//          composeMessage(); 
+//       }
+//       
+   }
+   
+   public void composeMessage(){
+      System.out.println("Send message gui");
+      jf2 = new JFrame();
+      JLabel jlFrom = new JLabel("From: ");
+      JLabel jlTo = new JLabel("To: ");
+      JLabel jlServer = new JLabel("To Server: ");
+      JPanel jpNorth=new JPanel();
+      JPanel jpCenter = new JPanel();
+      jpNorth.setLayout(new GridLayout(2,0));
+      jpNorth.add(jlFrom);
+      jpNorth.add(jtfFrom);
+      
+      jpNorth.add(jlTo);
+      jpNorth.add(jtfTo);
+      
+      jpCenter.add(new JScrollPane(jtaMessage));
+      
+      jf2.add(jpNorth, BorderLayout.NORTH);
+      jf2.add(jpCenter, BorderLayout.CENTER);
+      
+      jf2.setTitle("SMTP Client Message");
+      jf2.setSize(650,500);
+      jf2.setLocation(900,50);
+      jf2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         
+      jf2.setVisible(true);
+   }
+}//class
