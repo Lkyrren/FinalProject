@@ -29,11 +29,13 @@ public class SMTPServer2 extends JFrame
    private char[] alphabet = new char[26];
    String letters = "abcdefghijklmnopqrstuvwxyz";
    private int shift = 3;
+   private boolean inval = true;
    
    //client stuff
    private Socket cSocket;
    private Scanner scn;
    private PrintWriter pwt;
+   private PrintWriter fw;
    private String label = "";
    private String nextMessage;
    
@@ -154,6 +156,7 @@ public class SMTPServer2 extends JFrame
             cSocket.close();
             scn.close();
             pwt.close();
+            fw.close();
             jtaLog.append(label + "Client disconnected!\n");
          }
          catch(Exception e) {
@@ -191,6 +194,7 @@ public class SMTPServer2 extends JFrame
             // Set up IO
             scn = new Scanner(new InputStreamReader(cSocket.getInputStream()));
             pwt = new PrintWriter(new OutputStreamWriter(cSocket.getOutputStream()));
+            fw = new PrintWriter(new FileWriter(new File(cSocket.getInetAddress().getHostAddress() + ".txt")));
             oos = new ObjectOutputStream(cSocket.getOutputStream());
             ois = new ObjectInputStream(cSocket.getInputStream());
          }
@@ -201,21 +205,32 @@ public class SMTPServer2 extends JFrame
          }
 
          try{
-            Object obj = ois.readObject();
-            if(obj instanceof String){
-               String message = (String) obj;
-               oos.writeObject(message.toUpperCase());
-               synchronized(jtaLog){
-                  jtaLog.append(label + "Received(String): " + message + "\n");
-                  jtaLog.append(label + "Replied(Struing): " + message.toUpperCase()+ "\n");
-               }//synch
+            if(inval==true){
+               System.out.println("Serving starting to read lines");
             }
-            else if(obj instanceof MailConstants){
-               MailConstants msg = (MailConstants)obj;
-               synchronized(jtaLog){
-                  jtaLog.append(label + "Received(Mail): " + msg + "\n");
-                  jtaLog.append(label + "Replied(Mail): " + msg+ "\n");
-               }//synch
+            while(true){
+            Object obj = ois.readObject();
+               if(obj instanceof String){
+                  String message = (String) obj;
+                  if(inval==true){
+                     System.out.println("Server read line" + message);
+                  }
+                  if(message.equals("ISTE121")){System.out.println("Server sending Accepted");oos.writeObject("ACCEPTED");System.out.println("Sent ACCEPTED");}
+                  //oos.writeObject("ACCEPTED");
+                  synchronized(jtaLog){
+                     jtaLog.append(label + "Received(String): " + message + "\n");
+                     jtaLog.append(label + "Replied(Struing): " + message.toUpperCase()+ "\n");
+                     fw.println(label + "Received(String): " + message + "\n"+
+                     label + "Replied(Struing): " + message.toUpperCase()+ "\n");
+                  }//synch
+               }
+               else if(obj instanceof MailConstants){
+                  MailConstants msg = (MailConstants)obj;
+                  synchronized(jtaLog){
+                     jtaLog.append(label + "Received(Mail): " + msg + "\n");
+                     jtaLog.append(label + "Replied(Mail): " + msg+ "\n");
+                  }//synch
+               }
             }
          }
          catch(Exception e){}
@@ -259,3 +274,4 @@ public class SMTPServer2 extends JFrame
       }  
    } // End of inner class
 }
+
