@@ -9,7 +9,8 @@ public class SMTPCLient2 extends JFrame implements ActionListener
 {
    private JButton jbConnect = new JButton("Connect");
    private JTextField jtfServerIP = new JTextField(20);
-   private JTextArea jta = new JTextArea(100,200);
+   private JTextArea jta = new JTextArea(10,20);
+   public static final long serialVersionUid = 01L;
    
    //login gui
    private JFrame jf1;
@@ -33,6 +34,8 @@ public class SMTPCLient2 extends JFrame implements ActionListener
 
    public static final int SERVER_PORT =42069;
    private Socket socket = null;
+   
+   private boolean inval=true;
 
    /**
     * main program 
@@ -167,12 +170,18 @@ public class SMTPCLient2 extends JFrame implements ActionListener
 //       System.out.println("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
 //       System.out.println("Reply: " + reply + "\n");
       try{
-         oos.writeObject(jtfUsername.getText()+": "+jtfPassword.getText());
+         if(inval==true){
+               System.out.println("Client starting to write lines");
+         }
+         oos.writeObject(jtfUsername.getText());
+         oos.writeObject(jtfPassword.getText());
          jta.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
+         if(inval==true){
+               System.out.println("Client starting to read lines");
+         }
          Object obj = ois.readObject();
          if(obj instanceof MailConstants){
             MailConstants msg = (MailConstants) obj;
-            composeMessage();
          }
          else{
             String reply = (String)obj;
