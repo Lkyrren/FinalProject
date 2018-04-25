@@ -6,10 +6,10 @@ import javax.swing.*;
 import java.util.*;
 
 /**
- * TCPMTServer ... goes with TCPClient1
+ * SMTPServer ... goes with SMTPClient
  * Allows multiple connect/send/disconnect cycles
  * As many clients as we wish ... one thread per client
- * @author Pete Lutz
+ * @author Kyrren Love, Brenden Apo, Viskalakhi Natulapati & Anthony Fierce
  * @version 9-16-2017
  */
 public class SMTPServer2 extends JFrame 
