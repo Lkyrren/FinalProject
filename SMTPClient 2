@@ -5,8 +5,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
 
-public class SMTPClient2 extends JFrame implements ActionListener 
-{
+public class SMTPClient4 extends JFrame implements ActionListener{
    private JButton jbConnect = new JButton("Connect");
    private JTextField jtfServerIP = new JTextField(20);
    private JTextArea jta = new JTextArea(10,20);
@@ -18,9 +17,11 @@ public class SMTPClient2 extends JFrame implements ActionListener
    private JPanel jpN;
    private JTextField jtfUsername = new JTextField(20);
    private JTextField jtfPassword = new JTextField(20);
+   private JTextField jtfEmailAdd = new JTextField(25);
    private JButton jbLogin = new JButton("Login");
    private JLabel jlUser = new JLabel("Username");
    private JLabel jlPassword = new JLabel("Password");
+   private JLabel jlEmailAdd = new JLabel("Email Address");
    
   //Message gui
    private JFrame jf2;
@@ -40,29 +41,26 @@ public class SMTPClient2 extends JFrame implements ActionListener
    private JLabel jlSubject = new JLabel("Subject: ");
    private JTextField jtfSubject = new JTextField(15);
 
-   private ObjectOutputStream oos;
-   private ObjectInputStream ois;
-   private MailConstants mail;
+   private PrintWriter pwt;
+   private Scanner scan;
+   //private MailConstants mail;
    
    private JButton jbSendMail = new JButton("Send Mail");
 
    public static final int SERVER_PORT =42069;
    private Socket socket = null;
+   private MailConstants mail;
    
    private boolean inval=true;
 
-   /**
-    * main program 
-    */
+  
    public static void main(String[] args) 
    {
-      new SMTPClient2();
-   }
+      new SMTPClient4();
+   }//main
 
-   /**
-    * Constructor ... draw and set up GUI
-    */
-   public SMTPClient2() 
+  
+   public SMTPClient4() 
    {
       this.setTitle("SMTP Client");
       this.setSize(475, 300);
@@ -83,15 +81,13 @@ public class SMTPClient2 extends JFrame implements ActionListener
       jbLogin.addActionListener(this);
       jbSendMail.addActionListener(this);
       this.setVisible(true);
-   }
+   }//constructor
 
    /** 
     * Button dispatcher
     */
-    public void actionPerformed(ActionEvent ae) 
-    {
-      switch(ae.getActionCommand()) 
-      {
+    public void actionPerformed(ActionEvent ae){
+      switch(ae.getActionCommand()){
          case "Connect":
             doConnect();
             break;
@@ -99,10 +95,10 @@ public class SMTPClient2 extends JFrame implements ActionListener
             doDisconnect();
             break;
          case "Login":
-            doSend();
+            doLogin();
             break;
          case"Send Mail":
-            doMail();
+            sendMail();
             System.out.println("Sent mail to server");
             break;
       }
@@ -111,18 +107,13 @@ public class SMTPClient2 extends JFrame implements ActionListener
    /**
     * doConnect - Connect button
     */
-   private void doConnect() 
-   {
+   private void doConnect(){
       try{
-         // Connect to server and set up two streams
          socket = new Socket(jtfServerIP.getText(), SERVER_PORT);
-         oos = new ObjectOutputStream(socket.getOutputStream());
-         ois = new ObjectInputStream(socket.getInputStream());
+         pwt = new PrintWriter(socket.getOutputStream());
+         scan = new Scanner(socket.getInputStream());
       }
-      catch(IOException ioe){
-         jta.append("IO Exception: " + ioe + "\n");
-         return;
-      }
+      catch(IOException ioe){ioe.printStackTrace();}
       jta.append("Connected!\n");
       jbConnect.setText("Disconnect");
       login();
@@ -135,13 +126,10 @@ public class SMTPClient2 extends JFrame implements ActionListener
       try {
          // Close the socket and streams
          socket.close();
-         oos.close();
-         ois.close();
+         pwt.close();
+         scan.close();
       }
-      catch(IOException ioe) {
-         jta.append("IO Exception: " + ioe + "\n");
-         return;
-      }
+      catch(IOException ioe) {ioe.printStackTrace();}
       jbConnect.setText("Connect");
    }
    
@@ -155,6 +143,8 @@ public class SMTPClient2 extends JFrame implements ActionListener
          jpN.add(jtfUsername);
          jpN.add(jlPassword);
          jpN.add(jtfPassword);
+         jpN.add(jlEmailAdd);
+         jpN.add(jtfEmailAdd);
       jf1.add(jpN, BorderLayout.NORTH);
       
       JPanel jpS = new JPanel();
@@ -167,34 +157,6 @@ public class SMTPClient2 extends JFrame implements ActionListener
       jf1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
          
       jf1.setVisible(true);
-   }
-
-   /**
-    * doSend - Send button'
-    */
-   private void doSend() 
-   {
-      try{
-         if(inval==true){
-               System.out.println("Client starting to write lines");
-         }
-         oos.writeObject(jtfUsername.getText());
-         oos.writeObject(jtfPassword.getText());
-         jta.append("Sent: " + jtfUsername.getText()+": "+jtfPassword.getText() + "\n");
-         if(inval==true){
-               System.out.println("Client starting to read lines");
-         }
-         Object obj = ois.readObject();
-         if(obj instanceof MailConstants){
-            MailConstants msg = (MailConstants) obj;
-         }
-         else{
-            String reply = (String)obj;
-            jta.append("Reply: " + reply + "\n");
-            composeMessage();
-         }
-      }
-      catch(Exception e){}
    }
    
    public void composeMessage(){
@@ -210,6 +172,7 @@ public class SMTPClient2 extends JFrame implements ActionListener
      //add all labels and textfield to the JFrame
       jpNorth.add(jlFrom);
       jpNorth.add(jtfFrom);
+      jtfFrom.setText(jtfEmailAdd.getText());
       
       jpNorth.add(jlTo);
       jpNorth.add(jtfTo);
@@ -240,13 +203,46 @@ public class SMTPClient2 extends JFrame implements ActionListener
       jf2.setVisible(true);
    }
    
-   public void doMail(){
+   public void sendMail(){
    //add all constants to constructor of object and send it over to the server.
       try{
-         mail = new MailConstants(encrption , jtfTo.getText(),jtfFrom.getText(),jtfCCAddress.getText(),
-         jtfDate.getText(), jtfSubject.getText(), jtaMessage.getText());
-         oos.writeObject(mail);
+         // mail = new MailConstants(encrption , jtfTo.getText(),jtfFrom.getText(),jtfCCAddress.getText(),
+//          jtfDate.getText(), jtfSubject.getText(), jtaMessage.getText());
+         //pwt.println(mail);
+         // pwt.println("MAIL FROM: <"+jtfFrom.getText()+">");//mail from
+//          pwt.println("<"+jtfFrom.getText()+">");//mail from
+//          pwt.println("RCPT TO"+jtfTo.getText()+">");//rcpt to
+//          pwt.println("<"+jtfTo.getText()+">");//rcpt to
+//          //pwt.println();//rcpt to(CC)
+//          pwt.println("DATA");//DATA
+//          pwt.println(jtaMessage.getText());
+//          pwt.println("\n..\n");
+         pwt.println("MAIL FROM:");//mail from
+         pwt.println("<"+jtfFrom.getText()+">");//mail from
+         pwt.println("RCPT TO");//rcpt to
+         pwt.println("<"+jtfTo.getText()+">");//rcpt to
+         //pwt.println();//rcpt to(CC)
+         pwt.println("DATA");//DATA
+         pwt.println(jtaMessage.getText());
+         pwt.println("\n..\n");
       }
       catch(Exception e){}
+   }
+
+   /**
+    * doSend - Send button'
+    */
+   private void doLogin() 
+   {
+      // Get the sentence, send to server, wait for reply
+      pwt.println(jtfUsername.getText());
+      pwt.println(jtfPassword.getText());
+      pwt.flush();
+      jta.append("Sent: " + jtfUsername.getText()+jtfPassword.getText() + "\n");
+      String reply = scan.nextLine();
+      jta.append("Reply: " + reply + "\n");
+      if(reply.equals("ACCEPTED")){
+         composeMessage();
+      }
    }
 }//class
