@@ -47,7 +47,7 @@ public class SMTPClient4 extends JFrame implements ActionListener{
    
    private JButton jbSendMail = new JButton("Send Mail");
 
-   public static final int SERVER_PORT =42069;
+   public static final int SERVER_PORT = 42069;
    private Socket socket = null;
    private MailConstants mail;
    
@@ -206,25 +206,44 @@ public class SMTPClient4 extends JFrame implements ActionListener{
    public void sendMail(){
    //add all constants to constructor of object and send it over to the server.
       try{
-         // mail = new MailConstants(encrption , jtfTo.getText(),jtfFrom.getText(),jtfCCAddress.getText(),
+         pwt.println("MAIL FROM");
+         // // String OK = scan.nextLine();
+        //  if(OK.contains("OK"))
+//          {
+            pwt.println("< " + jtfFrom.getText() + " >");
+            pwt.flush();
+           
+         // // }
+         
+         pwt.println("RCPT TO");
+         // // OK = scan.nextLine();
+          
+         // if(OK.contains("OK"))
+//          {
+            pwt.println("< " + jtfTo.getText() + " >");
+            pwt.flush();
+         // // }
+         pwt.println("DATA"); 
+         //  OK = scan.nextLine();
+//          if(OK.contains("OK"))
+//          {
+            pwt.println(jtaMessage.getText()); 
+            pwt.flush();
+         //}
+         pwt.println("\n..\n");
+         //   mail = new MailConstants(true , jtfTo.getText(),jtfFrom.getText(),jtfCCAddress.getText(),
 //          jtfDate.getText(), jtfSubject.getText(), jtaMessage.getText());
-         //pwt.println(mail);
-         // pwt.println("MAIL FROM: <"+jtfFrom.getText()+">");//mail from
+//          pwt.println(mail);
+         //pwt.println();//rcpt to(CC)
+         //DATA
+         // pwt.println("MAIL FROM:");//mail from
 //          pwt.println("<"+jtfFrom.getText()+">");//mail from
-//          pwt.println("RCPT TO"+jtfTo.getText()+">");//rcpt to
+//          pwt.println("RCPT TO");//rcpt to
 //          pwt.println("<"+jtfTo.getText()+">");//rcpt to
 //          //pwt.println();//rcpt to(CC)
 //          pwt.println("DATA");//DATA
 //          pwt.println(jtaMessage.getText());
 //          pwt.println("\n..\n");
-         pwt.println("MAIL FROM:");//mail from
-         pwt.println("<"+jtfFrom.getText()+">");//mail from
-         pwt.println("RCPT TO");//rcpt to
-         pwt.println("<"+jtfTo.getText()+">");//rcpt to
-         //pwt.println();//rcpt to(CC)
-         pwt.println("DATA");//DATA
-         pwt.println(jtaMessage.getText());
-         pwt.println("\n..\n");
       }
       catch(Exception e){}
    }
