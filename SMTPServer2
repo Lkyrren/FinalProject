@@ -112,22 +112,6 @@ import java.util.*;
       serverThread.stopServer();
    }
    
-   public void doRelay(/*MailConstants _msg*/){
-         //MailConstants relay = _msg;
-         try{
-            Socket relaySocket = new Socket("129.21.102.209", SERVER_PORT);
-            ObjectOutputStream oos2 = new ObjectOutputStream(relaySocket.getOutputStream());
-            ObjectInputStream ois2 = new ObjectInputStream(relaySocket.getInputStream());
-            String hi = "HI BRENDAN YOU FAILURE";
-            oos.writeObject(hi);
-            Object read = ois.readObject();
-            if(read instanceof String){
-               String messages = (String)read;
-               jtaLog.append(messages+"\n");
-            }
-        }
-        catch(Exception e){}
-   } 
    
    /**
     * Class ServerThread
@@ -224,36 +208,64 @@ import java.util.*;
                   jtaLog.append(label + "Replied: ACCEPTED \n");
                }//synch
                // if(message.contains("HELO")){
+                     //pwt.println(s250+"OK \n");
 //                   continue
 //                }
+               if(message.contains("MAIL")){
+                     String from = scn.nextLine();
+                     jtaLog.append(from+"\n");
+                     jtaLog.append(s250+"OK \n");
+                     // pwt.println("OK \n");
+//                      pwt.flush();
+                     continue;
+               }
+               if(message.contains("RCPT")){
+                     String rcptTo = scn.nextLine();
+                     jtaLog.append(rcptTo+"\n");
+                     jtaLog.append(s250+"OK \n");
+                     // pwt.println("OK \n");
+//                      pwt.flush();
+                     continue;
+               }
+               if(message.contains("DATA")){
+                     String data = scn.nextLine();
+                     jtaLog.append(data+"\n");
+                     jtaLog.append(s250+"OK \n");
+                     // pwt.println("OK \n");
+//                      pwt.flush();
+                     continue;
+               }
             }
-            else if(message.contains("MAIL")){
-               String from = scn.nextLine();
-               jtaLog.append(from+"\n");
-               //continue;
-               return;
-            }
-            else if(message.contains("RCPT")){
-               String rcptTo = scn.nextLine();
-               jtaLog.append(rcptTo+"\n");
-               //continue;
-               return;
-            }
-            if(message.contains("DATA")){
-               String data = scn.nextLine();
-               jtaLog.append(data+"\n");
-               //continue;
-               return;
+            else if(message.equals("GET MAIL")){
+               //return mail back to client.
             }
             else{
                pwt.println("DECLINED");
                pwt.flush();
                synchronized(jtaLog){
                   jtaLog.append(label + "Received: " + message + "\n");
-                  jtaLog.append("S: Replied: Invalid Login\n");
+                  jtaLog.append(s250+"Replied: OK\n");
                }//synch
             }
          }
-      }  
+      } 
+      public void doRelay(){
+         //MailConstants relay = _msg;
+         try{
+            Socket relaySocket = new Socket("129.21.102.209", SERVER_PORT);
+            Scanner scn2 = new Scanner(new InputStreamReader(relaySocket.getInputStream()));
+            PrintWriter pwt2 = new PrintWriter(new OutputStreamWriter(relaySocket.getOutputStream()));
+            String hi = "HI BRENDAN YOU FAILURE";
+            pwt.println(hi);
+            while(scn.hasNextLine()){
+               String messages = scn.nextLine();
+               jtaLog.append(messages+"\n");
+            }
+        }
+        catch(Exception e){}
+   }  
    } // End of inner class
 }
+//Bully: 129.21.69.37
+//Apollo: 129.21.103.53
+//Me: 129.21.106.62
